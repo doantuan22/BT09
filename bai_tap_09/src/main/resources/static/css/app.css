@@ -1,0 +1,152 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f7fb;
+    color: #172033;
+}
+
+.topbar {
+    height: 64px;
+    background: #172554;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    gap: 30px;
+}
+
+.brand a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 20px;
+}
+
+.topbar nav {
+    display: flex;
+    gap: 18px;
+    flex: 1;
+}
+
+.topbar nav a {
+    color: #dbeafe;
+    text-decoration: none;
+}
+
+.account {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.link-button {
+    background: none;
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.panel, .card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .06);
+}
+
+.btn {
+    display: inline-block;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 14px;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.primary {
+    background: #2563eb;
+    color: #fff;
+}
+
+.full {
+    width: 100%;
+}
+
+.alert {
+    padding: 12px;
+    border-radius: 8px;
+    margin: 12px 0;
+}
+
+.alert.error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.alert.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.auth-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.auth-card {
+    width: min(420px, 100%);
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .06);
+}
+
+.auth-card h1, .auth-card h2 {
+    margin-top: 0;
+}
+
+.auth-card form {
+    display: grid;
+    gap: 12px;
+}
+
+.auth-card label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+}
+
+footer {
+    text-align: center;
+    padding: 18px;
+    color: #64748b;
+}

@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class DataInitializer implements CommandLineRunner {
 
+    private static final String SAMPLE_USER_IMAGE = "/images/user.svg";
+
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -43,15 +45,21 @@ public class DataInitializer implements CommandLineRunner {
         Role adminRole = findOrCreateRole("ADMIN");
         Role sampleUserRole = findOrCreateRole("ROLE_USER");
 
+        var existingSampleUser = userRepository.findByUsername("user01");
+        if (existingSampleUser.isPresent()
+                && "/images/user.png".equals(existingSampleUser.get().getImages())) {
+            existingSampleUser.get().setImages(SAMPLE_USER_IMAGE);
+        }
+
         if (sampleUserPassword != null && !sampleUserPassword.isBlank()
-                && userRepository.findByUsername("user01").isEmpty()
+                && existingSampleUser.isEmpty()
                 && !userRepository.existsByEmailIgnoreCase("user01@gmail.com")) {
             User sampleUser = new User();
             sampleUser.setUsername("user01");
             sampleUser.setEmail("user01@gmail.com");
             sampleUser.setPassword(passwordEncoder.encode(sampleUserPassword));
             sampleUser.setFullName("Nguyễn Hữu Trung");
-            sampleUser.setImages("/images/user.png");
+            sampleUser.setImages(SAMPLE_USER_IMAGE);
             sampleUser.setEnabled(true);
             sampleUser.setRole(sampleUserRole);
             userRepository.save(sampleUser);

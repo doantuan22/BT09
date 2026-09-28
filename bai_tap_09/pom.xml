@@ -6,7 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.1.1</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>bai_tap_09</artifactId>
@@ -120,6 +120,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<generatedSourcesDirectory>${project.build.directory}/mapstruct-generated</generatedSourcesDirectory>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>

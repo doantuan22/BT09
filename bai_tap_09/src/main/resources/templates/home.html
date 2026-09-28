@@ -5,8 +5,10 @@
 </head>
 <body>
 <main layout:fragment="content">
-    <h1>Trang chủ UTEShop</h1>
-    <p>Xin chào <strong th:text="${#authentication.principal.fullName}">User</strong></p>
+    <section class="panel">
+        <h1>Trang chủ UTEShop</h1>
+        <p>Xin chào <strong th:text="${#authentication.principal.fullName}">User</strong></p>
+    </section>
 </main>
 </body>
 </html>
