@@ -19,7 +19,7 @@ public class HomeController {
     @GetMapping("/")
     public String home(Authentication authentication, Model model) {
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails principal) model.addAttribute("principal", principal);
-        model.addAttribute("userCount", userService.count());
+        model.addAttribute("userCount", userService.countUsers());
         model.addAttribute("productCount", productService.countProducts());
         return "home";
     }

@@ -1,23 +1,141 @@
 package com.example.bai_tap_09_bai_tap.service;
+
 import com.example.bai_tap_09_bai_tap.dto.UserDTO;
-import com.example.bai_tap_09_bai_tap.entity.*;
+import com.example.bai_tap_09_bai_tap.entity.Product;
+import com.example.bai_tap_09_bai_tap.entity.Role;
+import com.example.bai_tap_09_bai_tap.entity.User;
 import com.example.bai_tap_09_bai_tap.mapper.UserMapper;
-import com.example.bai_tap_09_bai_tap.repository.*;
-import com.example.bai_tap_09_bai_tap.service.CloudinaryService;
+import com.example.bai_tap_09_bai_tap.repository.ProductRepository;
+import com.example.bai_tap_09_bai_tap.repository.RoleRepository;
+import com.example.bai_tap_09_bai_tap.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
 import java.util.Locale;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-@Service @Transactional
+
+@Service
+@Transactional
 public class UserServiceImpl implements UserService {
- private final UserRepository users;private final RoleRepository roles;private final ProductRepository products;private final UserMapper mapper;private final PasswordEncoder encoder;private final CloudinaryService cloudinary;
- public UserServiceImpl(UserRepository users,RoleRepository roles,ProductRepository products,UserMapper mapper,PasswordEncoder encoder,CloudinaryService cloudinary){this.users=users;this.roles=roles;this.products=products;this.mapper=mapper;this.encoder=encoder;this.cloudinary=cloudinary;}
- @Transactional(readOnly=true) public Page<UserDTO> search(String q,int page,int size){String s=q==null?"":q.trim();Page<User> result=users.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(s,s,s,PageRequest.of(Math.max(0,page),Math.min(50,Math.max(1,size)),Sort.by("createdAt").descending()));return result.map(u->{UserDTO dto=mapper.toDto(u);dto.setProductCount(products.countByUserId(u.getId()));return dto;});}
- @Transactional(readOnly=true) public UserDTO findById(Long id){User u=users.findById(id).orElseThrow(()->new EntityNotFoundException("Không tìm thấy người dùng."));UserDTO dto=mapper.toDto(u);dto.setProductCount(products.countByUserId(id));return dto;}
- public UserDTO save(UserDTO dto,String password){User u=dto.getId()==null?new User():users.findById(dto.getId()).orElseThrow(()->new EntityNotFoundException("Không tìm thấy người dùng."));String username=dto.getUsername().trim();if(users.existsByUsernameIgnoreCaseAndIdNot(username,u.getId()==null?-1L:u.getId()))throw new IllegalArgumentException("Username đã tồn tại.");String email=dto.getEmail().trim().toLowerCase(Locale.ROOT);if(users.existsByEmailIgnoreCaseAndIdNot(email,u.getId()==null?-1L:u.getId()))throw new IllegalArgumentException("Email đã tồn tại.");u.setUsername(username);u.setEmail(email);u.setFullName(dto.getFullName().trim());u.setEnabled(dto.isEnabled());u.setRole(roles.findByNameIgnoreCase(dto.getRoleName()).orElseThrow(()->new IllegalArgumentException("Role không hợp lệ.")));if(u.getId()==null)u.setPassword(encoder.encode("123456"));else if(password!=null&&!password.isBlank())u.setPassword(encoder.encode(password));return mapper.toDto(users.save(u));}
- public void delete(Long id){if(!users.existsById(id))throw new EntityNotFoundException("Không tìm thấy người dùng.");products.findAllByUserId(id).forEach(p->{String image=p.getImageUrl();if(image!=null&&image.contains("|"))cloudinary.delete(image.substring(image.indexOf('|')+1));});users.deleteById(id);}
- @Transactional(readOnly=true) public long count(){return users.count();}
- @Transactional(readOnly=true) public long countProducts(Long userId){return products.countByUserId(userId);}
+    private final UserRepository users;
+    private final RoleRepository roles;
+    private final ProductRepository products;
+    private final UserMapper mapper;
+    private final PasswordEncoder passwordEncoder;
+    private final CloudinaryService cloudinaryService;
+
+    public UserServiceImpl(UserRepository users, RoleRepository roles,
+                           ProductRepository products, UserMapper mapper,
+                           PasswordEncoder passwordEncoder, CloudinaryService cloudinaryService) {
+        this.users = users;
+        this.roles = roles;
+        this.products = products;
+        this.mapper = mapper;
+        this.passwordEncoder = passwordEncoder;
+        this.cloudinaryService = cloudinaryService;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserDTO> findAll(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "id"));
+        return users.search(keyword == null ? "" : keyword.trim(), pageable)
+                .map(user -> {
+                    UserDTO dto = mapper.toDto(user);
+                    dto.setProductCount(users.countProductsByUserId(user.getId()));
+                    return dto;
+                });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDTO findById(Long id) {
+        User user = users.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại."));
+        UserDTO dto = mapper.toDto(user);
+        dto.setProductCount(users.countProductsByUserId(id));
+        return dto;
+    }
+
+    @Override
+    public UserDTO create(UserDTO dto) {
+        String username = dto.getUsername().trim();
+        String email = dto.getEmail().trim().toLowerCase(Locale.ROOT);
+        if (users.existsByUsernameIgnoreCase(username)) {
+            throw new IllegalArgumentException("Username đã tồn tại.");
+        }
+        if (users.existsByEmailIgnoreCase(email)) {
+            throw new IllegalArgumentException("Email đã tồn tại.");
+        }
+
+        User user = mapper.toEntity(dto);
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setRole(findRole(dto.getRoleName()));
+        user.setPassword(passwordEncoder.encode("123456"));
+        user.setEnabled(dto.isEnabled());
+        return mapper.toDto(users.save(user));
+    }
+
+    @Override
+    public UserDTO update(Long id, UserDTO dto) {
+        User user = users.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại."));
+        String username = dto.getUsername().trim();
+        String email = dto.getEmail().trim().toLowerCase(Locale.ROOT);
+        if (users.existsByUsernameIgnoreCaseAndIdNot(username, id)) {
+            throw new IllegalArgumentException("Username đã tồn tại.");
+        }
+        if (users.existsByEmailIgnoreCaseAndIdNot(email, id)) {
+            throw new IllegalArgumentException("Email đã tồn tại.");
+        }
+
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setFullName(dto.getFullName().trim());
+        user.setEnabled(dto.isEnabled());
+        if (dto.getRoleName() != null && !dto.getRoleName().isBlank()) {
+            user.setRole(findRole(dto.getRoleName()));
+        }
+        return mapper.toDto(users.save(user));
+    }
+
+    @Override
+    public void delete(Long id) {
+        User user = users.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại."));
+        List<Product> ownedProducts = products.findAllByUserId(id);
+        for (Product product : ownedProducts) {
+            String imageUrl = product.getImageUrl();
+            if (imageUrl != null && imageUrl.contains("|")) {
+                cloudinaryService.delete(imageUrl.substring(imageUrl.indexOf('|') + 1));
+            }
+        }
+        products.deleteAll(ownedProducts);
+        users.delete(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countUsers() {
+        return users.count();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countProducts(Long userId) {
+        return users.countProductsByUserId(userId);
+    }
+
+    private Role findRole(String roleName) {
+        String name = roleName == null || roleName.isBlank() ? "ROLE_USER" : roleName;
+        return roles.findByName(name)
+                .orElseThrow(() -> new IllegalArgumentException("Role không tồn tại."));
+    }
 }

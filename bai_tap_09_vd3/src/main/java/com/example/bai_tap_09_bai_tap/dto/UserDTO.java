@@ -2,20 +2,19 @@ package com.example.bai_tap_09_bai_tap.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 public class UserDTO {
 
     private Long id;
-    @NotBlank @Size(min=3,max=50)
+    @NotBlank(message="Username không được để trống")
     private String username;
 
-    @Email
-    @NotBlank
+    @NotBlank(message="Email không được để trống")
+    @Email(message="Email không hợp lệ")
     private String email;
 
-    @NotBlank
+    @NotBlank(message="Họ tên không được để trống")
     private String fullName;
     private String images;
 
